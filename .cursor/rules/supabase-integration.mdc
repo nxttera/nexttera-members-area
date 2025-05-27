@@ -1,0 +1,571 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Supabase Integration Rules
+
+## REGRA FUNDAMENTAL: SEMPRE USAR @nuxtjs/supabase
+
+### OBRIGATÓRIO: Módulo Oficial Nuxt Supabase
+- **SEMPRE** usar `@nuxtjs/supabase` para qualquer integração com Supabase
+- **NUNCA** usar `@supabase/supabase-js` diretamente
+- **BACKEND**: Usar exclusivamente `serverSupabaseServiceRole` com service role key
+- **FRONTEND**: Usar composables oficiais do módulo
+
+Reference: [Nuxt Supabase Documentation](mdc:https:/supabase.nuxtjs.org/getting-started/introduction)
+
+## INSTALLATION & SETUP
+
+### Initial Setup
+```bash
+# Install official module
+npx nuxi@latest module add supabase
+```
+
+### Environment Configuration ([.env](mdc:.env))
+```env
+# Required Supabase Environment Variables
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your-anon-key
+SUPABASE_SERVICE_KEY=your-service-role-key
+```
+
+### Nuxt Configuration ([nuxt.config.ts](mdc:nuxt.config.ts))
+```typescript
+export default defineNuxtConfig({
+  modules: [
+    '@nuxtjs/tailwindcss',
+    '@nuxtjs/supabase',
+    'nuxt-llms'
+  ],
+  
+  supabase: {
+    useSsrCookies: true,
+    redirect: true,
+    redirectOptions: {
+      login: '/login',
+      callback: '/auth/callback',
+      include: ['/dashboard(/*)?', '/profile(/*)?'],
+      exclude: ['/'],
+      saveRedirectToCookie: true
+    },
+    types: './types/database.types.ts',
+    cookieOptions: {
+      maxAge: 60 * 60 * 8,
+      sameSite: 'lax',
+      secure: true
+    }
+  }
+})
+```
+
+## TYPE GENERATION
+
+### Database Types ([types/database.types.ts](mdc:types/database.types.ts))
+```bash
+# Generate types from live database
+supabase gen types --lang=typescript --project-id YourProjectId > types/database.types.ts
+
+# Generate types for local development
+supabase gen types --lang=typescript --local > types/database.types.ts
+```
+
+### Database Schema Types
+```typescript
+// types/database.types.ts - Auto-generated
+export interface Database {
+  public: {
+    Tables: {
+      members: {
+        Row: {
+          id: string
+          cpf: string
+          email: string
+          name: string
+          subscription_type: 'basic' | 'premium' | 'enterprise'
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          cpf: string
+          email: string
+          name: string
+          subscription_type: 'basic' | 'premium' | 'enterprise'
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          cpf?: string
+          email?: string
+          name?: string
+          subscription_type?: 'basic' | 'premium' | 'enterprise'
+          is_active?: boolean
+          updated_at?: string
+        }
+      }
+    }
+  }
+}
+```
+
+## FRONTEND COMPOSABLES
+
+### Authentication Composables
+```vue
+<!-- pages/login.vue -->
+<script setup lang="ts">
+const supabase = useSupabaseClient<Database>()
+const user = useSupabaseUser()
+
+const loginWithGoogle = async () => {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${window.location.origin}/auth/callback`
+    }
+  })
+  
+  if (error) {
+    throw new Error('Erro no login com Google')
+  }
+}
+
+const loginWithEmail = async (email: string, password: string) => {
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  })
+  
+  if (error) {
+    throw new Error('Email ou senha inválidos')
+  }
+}
+
+const logout = async () => {
+  const { error } = await supabase.auth.signOut()
+  if (error) {
+    throw new Error('Erro ao fazer logout')
+  }
+  
+  await navigateTo('/login')
+}
+</script>
+
+<template>
+  <div v-if="!user" class="min-h-screen flex items-center justify-center bg-base-200">
+    <div class="card bg-base-100 shadow-xl w-96">
+      <div class="card-body">
+        <h2 class="card-title justify-center">Login</h2>
+        
+        <button @click="loginWithGoogle" class="btn btn-primary">
+          Entrar com Google
+        </button>
+        
+        <div class="divider">ou</div>
+        
+        <form @submit.prevent="handleEmailLogin">
+          <BaseInput
+            v-model="loginForm.email"
+            label="Email"
+            type="email"
+            required
+          />
+          <BaseInput
+            v-model="loginForm.password"
+            label="Senha"
+            type="password"
+            required
+          />
+          <button type="submit" class="btn btn-primary w-full">
+            Entrar
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <div v-else>
+    <p>Bem-vindo, {{ user.email }}!</p>
+    <button @click="logout" class="btn btn-outline">Sair</button>
+  </div>
+</template>
+```
+
+### Data Fetching with RLS
+```vue
+<!-- pages/dashboard.vue -->
+<script setup lang="ts">
+const supabase = useSupabaseClient<Database>()
+const user = useSupabaseUser()
+
+// Redirect if not authenticated
+if (!user.value) {
+  await navigateTo('/login')
+}
+
+const { data: memberProfile, error } = await supabase
+  .from('members')
+  .select('*')
+  .eq('id', user.value.id)
+  .single()
+
+if (error) {
+  throw createError({
+    statusCode: 404,
+    statusMessage: 'Perfil de membro não encontrado'
+  })
+}
+
+const updateProfile = async (updates: Partial<Database['public']['Tables']['members']['Update']>) => {
+  const { error } = await supabase
+    .from('members')
+    .update(updates)
+    .eq('id', user.value.id)
+  
+  if (error) {
+    throw new Error('Erro ao atualizar perfil')
+  }
+  
+  await refreshCookie()
+}
+</script>
+
+<template>
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Dashboard</h1>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title">Perfil</h2>
+          <p><strong>Nome:</strong> {{ memberProfile.name }}</p>
+          <p><strong>Email:</strong> {{ memberProfile.email }}</p>
+          <p><strong>CPF:</strong> {{ memberProfile.cpf }}</p>
+          <p><strong>Tipo:</strong> {{ memberProfile.subscription_type }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+```
+
+## BACKEND SERVER UTILS
+
+### REGRA: SEMPRE usar serverSupabaseServiceRole no backend
+```typescript
+// server/api/members/index.get.ts
+export default defineEventHandler(async (event) => {
+  const supabase = serverSupabaseServiceRole<Database>(event)
+  
+  const { data: members, error } = await supabase
+    .from('members')
+    .select('*')
+    .order('created_at', { ascending: false })
+  
+  if (error) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Erro ao buscar membros'
+    })
+  }
+  
+  return { data: members }
+})
+```
+
+### Member Creation with Service Role
+```typescript
+// server/api/members/index.post.ts
+export default defineEventHandler(async (event) => {
+  const supabase = serverSupabaseServiceRole<Database>(event)
+  const body = await readBody(event)
+  
+  const { validateCPF, formatCPF } = useValidation()
+  
+  if (!validateCPF(body.cpf)) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'CPF inválido'
+    })
+  }
+  
+  const memberData: Database['public']['Tables']['members']['Insert'] = {
+    cpf: formatCPF(body.cpf),
+    email: body.email,
+    name: body.name,
+    subscription_type: body.subscription_type,
+    is_active: true
+  }
+  
+  const { data: newMember, error } = await supabase
+    .from('members')
+    .insert(memberData)
+    .select()
+    .single()
+  
+  if (error) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Erro ao criar membro'
+    })
+  }
+  
+  return { data: newMember }
+})
+```
+
+### Authentication Verification
+```typescript
+// server/api/members/profile.get.ts
+export default defineEventHandler(async (event) => {
+  const user = await serverSupabaseUser(event)
+  
+  if (!user) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'Usuário não autenticado'
+    })
+  }
+  
+  const supabase = serverSupabaseServiceRole<Database>(event)
+  
+  const { data: memberProfile, error } = await supabase
+    .from('members')
+    .select('*')
+    .eq('auth_user_id', user.id)
+    .single()
+  
+  if (error) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'Perfil não encontrado'
+    })
+  }
+  
+  return { data: memberProfile }
+})
+```
+
+## MIDDLEWARE & PROTECTION
+
+### Authentication Middleware ([middleware/auth.ts](mdc:middleware/auth.ts))
+```typescript
+export default defineNuxtRouteMiddleware((to) => {
+  const user = useSupabaseUser()
+  
+  if (!user.value) {
+    return navigateTo('/login')
+  }
+})
+```
+
+### Protected Pages
+```vue
+<!-- pages/admin/index.vue -->
+<script setup lang="ts">
+definePageMeta({
+  middleware: 'auth'
+})
+
+const user = useSupabaseUser()
+const supabase = useSupabaseClient<Database>()
+
+// Check if user has admin role
+const { data: adminProfile } = await supabase
+  .from('admin_users')
+  .select('role')
+  .eq('user_id', user.value?.id)
+  .single()
+
+if (!adminProfile || adminProfile.role !== 'admin') {
+  throw createError({
+    statusCode: 403,
+    statusMessage: 'Acesso negado'
+  })
+}
+</script>
+```
+
+## ROW LEVEL SECURITY (RLS) PATTERNS
+
+### Enable RLS on Tables
+```sql
+-- Enable RLS
+ALTER TABLE members ENABLE ROW LEVEL SECURITY;
+
+-- Policy for users to read their own data
+CREATE POLICY "Users can read own data" ON members
+  FOR SELECT USING (auth.uid() = auth_user_id);
+
+-- Policy for users to update their own data
+CREATE POLICY "Users can update own data" ON members
+  FOR UPDATE USING (auth.uid() = auth_user_id);
+
+-- Policy for service role to manage all data
+CREATE POLICY "Service role full access" ON members
+  FOR ALL USING (current_setting('role') = 'service_role');
+```
+
+## REAL-TIME SUBSCRIPTIONS
+
+### Real-time Data Updates
+```vue
+<script setup lang="ts">
+const supabase = useSupabaseClient<Database>()
+const members = ref<Database['public']['Tables']['members']['Row'][]>([])
+
+// Initial data fetch
+const { data } = await supabase
+  .from('members')
+  .select('*')
+  .order('created_at', { ascending: false })
+
+members.value = data || []
+
+// Real-time subscription
+const channel = supabase
+  .channel('members-changes')
+  .on(
+    'postgres_changes',
+    {
+      event: '*',
+      schema: 'public',
+      table: 'members'
+    },
+    (payload) => {
+      switch (payload.eventType) {
+        case 'INSERT':
+          members.value.unshift(payload.new as Database['public']['Tables']['members']['Row'])
+          break
+        case 'UPDATE':
+          const updateIndex = members.value.findIndex(m => m.id === payload.new.id)
+          if (updateIndex !== -1) {
+            members.value[updateIndex] = payload.new as Database['public']['Tables']['members']['Row']
+          }
+          break
+        case 'DELETE':
+          members.value = members.value.filter(m => m.id !== payload.old.id)
+          break
+      }
+    }
+  )
+  .subscribe()
+
+// Cleanup subscription
+onUnmounted(() => {
+  supabase.removeChannel(channel)
+})
+</script>
+```
+
+## COMPOSABLES FOR COMMON OPERATIONS
+
+### Member Management Composable
+```typescript
+// composables/useMembers.ts
+export const useMembers = () => {
+  const supabase = useSupabaseClient<Database>()
+  
+  const createMember = async (memberData: Database['public']['Tables']['members']['Insert']) => {
+    const { data, error } = await $fetch('/api/members', {
+      method: 'POST',
+      body: memberData
+    })
+    
+    if (error) {
+      throw new Error('Erro ao criar membro')
+    }
+    
+    return data
+  }
+  
+  const updateMember = async (id: string, updates: Database['public']['Tables']['members']['Update']) => {
+    const { data, error } = await supabase
+      .from('members')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+    
+    if (error) {
+      throw new Error('Erro ao atualizar membro')
+    }
+    
+    return data
+  }
+  
+  const getMemberByEmail = async (email: string) => {
+    const { data, error } = await supabase
+      .from('members')
+      .select('*')
+      .eq('email', email)
+      .single()
+    
+    if (error) {
+      throw new Error('Membro não encontrado')
+    }
+    
+    return data
+  }
+  
+  return {
+    createMember,
+    updateMember,
+    getMemberByEmail
+  }
+}
+```
+
+## ERROR HANDLING & LOGGING
+
+### Centralized Error Handling
+```typescript
+// server/api/members/[id].put.ts
+export default defineEventHandler(async (event) => {
+  try {
+    const supabase = serverSupabaseServiceRole<Database>(event)
+    const id = getRouterParam(event, 'id')
+    const updates = await readBody(event)
+    
+    const { data: updatedMember, error } = await supabase
+      .from('members')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+    
+    if (error) {
+      console.error('Supabase error:', error)
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'Erro ao atualizar membro'
+      })
+    }
+    
+    return { data: updatedMember }
+  } catch (error) {
+    console.error('API error:', error)
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Erro interno do servidor'
+    })
+  }
+})
+```
+
+## ENFORCEMENT RULES
+
+### Development Standards
+1. **NEVER import @supabase/supabase-js directly**
+2. **ALWAYS use @nuxtjs/supabase composables and utilities**
+3. **Backend operations MUST use serverSupabaseServiceRole**
+4. **Frontend operations use client composables with RLS**
+5. **Generate and update types regularly**
+6. **Implement proper error handling for all operations**
+7. **Use real-time subscriptions for dynamic data**
+8. **Follow RLS patterns for data security**

@@ -1,0 +1,404 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Project Setup & Configuration Rules
+
+## Initial Project Setup
+
+### Project Creation
+```bash
+# Create new Nuxt project
+npx nuxi@latest init nexttera-members-area
+cd nexttera-members-area
+
+# Install dependencies with Yarn
+yarn install
+
+# Add essential modules
+yarn add --dev @nuxtjs/tailwindcss
+yarn add --dev daisyui@latest
+yarn add nuxt-llms
+```
+
+### Required Directory Structure
+```
+nexttera-members-area/
+├── [.cursor/](mdc:.cursor)
+│   └── [rules/](mdc:.cursor/rules)     # Cursor Rules
+├── [assets/](mdc:assets)
+│   └── [css/](mdc:assets/css)
+│       └── [main.css](mdc:assets/css/main.css)
+├── [components/](mdc:components)       # Auto-imported components
+├── [composables/](mdc:composables)     # Auto-imported composables
+├── [layouts/](mdc:layouts)
+│   └── [default.vue](mdc:layouts/default.vue)
+├── [middleware/](mdc:middleware)       # Route middleware
+├── [pages/](mdc:pages)                 # File-based routing
+├── [plugins/](mdc:plugins)             # Nuxt plugins
+├── [public/](mdc:public)               # Static assets
+├── [server/](mdc:server)
+│   ├── [api/](mdc:server/api)          # API routes
+│   └── [middleware/](mdc:server/middleware)
+├── [stores/](mdc:stores)               # Pinia stores (if needed)
+├── [app.vue](mdc:app.vue)               # Root component
+├── [error.vue](mdc:error.vue)           # Error page
+├── [nuxt.config.ts](mdc:nuxt.config.ts) # Nuxt configuration
+└── [package.json](mdc:package.json)
+```
+
+## Configuration Files
+
+### Primary Nuxt Configuration ([nuxt.config.ts](mdc:nuxt.config.ts))
+```typescript
+export default defineNuxtConfig({
+  devtools: { enabled: true },
+  
+  modules: [
+    '@nuxtjs/tailwindcss',
+    'nuxt-llms'
+  ],
+  
+  css: ['~/assets/css/main.css'],
+  
+  tailwindcss: {
+    exposeConfig: true,
+    viewer: true,
+    configPath: '~/tailwind.config.js'
+  },
+  
+  llms: {
+    domain: 'https://nexttera-members-area.com',
+    title: 'Nexttera Members Area',
+    description: 'Área de membros da Nexttera - Plataforma exclusiva para nossos membros',
+    sections: [
+      {
+        title: 'Documentação',
+        description: 'Documentação técnica e guias',
+        links: [
+          {
+            title: 'Getting Started',
+            description: 'Como começar a usar a plataforma',
+            href: '/docs/getting-started'
+          }
+        ]
+      }
+    ]
+  },
+  
+  app: {
+    head: {
+      title: 'Nexttera Members Area',
+      htmlAttrs: {
+        lang: 'pt-BR'
+      },
+      meta: [
+        { charset: 'utf-8' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        { hid: 'description', name: 'description', content: 'Área de membros da Nexttera' }
+      ],
+      link: [
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
+      ]
+    },
+    pageTransition: { name: 'page', mode: 'out-in' },
+    layoutTransition: { name: 'layout', mode: 'out-in' }
+  },
+  
+  runtimeConfig: {
+    apiSecret: '',
+    public: {
+      apiBase: '/api'
+    }
+  }
+})
+```
+
+### Main CSS File ([assets/css/main.css](mdc:assets/css/main.css))
+```css
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: light --default, dark --prefersdark, cupcake, corporate;
+  root: ":root";
+  logs: false;
+}
+
+/* Page transitions */
+.page-enter-active,
+.page-leave-active {
+  transition: all 0.3s ease;
+}
+
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.layout-enter-active,
+.layout-leave-active {
+  transition: all 0.3s ease;
+}
+
+.layout-enter-from,
+.layout-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+```
+
+### Package.json Configuration ([package.json](mdc:package.json))
+```json
+{
+  "name": "nexttera-members-area",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "type-check": "nuxt typecheck"
+  },
+  "devDependencies": {
+    "@nuxt/devtools": "latest",
+    "@nuxtjs/tailwindcss": "^6.14.1",
+    "daisyui": "latest",
+    "nuxt": "^3.17.0",
+    "vue": "^3.4.0",
+    "vue-router": "^4.4.0"
+  },
+  "dependencies": {
+    "nuxt-llms": "latest"
+  }
+}
+```
+
+### TypeScript Configuration ([tsconfig.json](mdc:tsconfig.json))
+```json
+{
+  "extends": "./.nuxt/tsconfig.json"
+}
+```
+
+## Environment Configuration
+
+### Environment Variables ([.env](mdc:.env))
+```env
+# API Configuration
+NUXT_API_SECRET=your-secret-key
+NUXT_PUBLIC_API_BASE=https://api.nexttera.com
+
+# Database Configuration (if needed)
+DATABASE_URL=postgresql://user:password@localhost:5432/nexttera_members
+
+# External Services
+MAIL_API_KEY=your-mail-api-key
+STORAGE_API_KEY=your-storage-api-key
+```
+
+### Environment Types ([types/env.d.ts](mdc:types/env.d.ts))
+```typescript
+declare global {
+  namespace NodeJS {
+    interface ProcessEnv {
+      NUXT_API_SECRET: string
+      NUXT_PUBLIC_API_BASE: string
+      DATABASE_URL?: string
+      MAIL_API_KEY?: string
+      STORAGE_API_KEY?: string
+    }
+  }
+}
+
+export {}
+```
+
+## Core Application Files
+
+### Root Application ([app.vue](mdc:app.vue))
+```vue
+<script setup lang="ts">
+useSeoMeta({
+  titleTemplate: '%s - Nexttera Members Area',
+  description: 'Área de membros exclusiva da Nexttera',
+  ogTitle: 'Nexttera Members Area',
+  ogDescription: 'Área de membros exclusiva da Nexttera',
+  ogImage: '/og-image.jpg',
+  twitterCard: 'summary_large_image'
+})
+</script>
+
+<template>
+  <div>
+    <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
+  </div>
+</template>
+```
+
+### Default Layout ([layouts/default.vue](mdc:layouts/default.vue))
+```vue
+<script setup lang="ts">
+const navigation = [
+  { name: 'Dashboard', href: '/dashboard' },
+  { name: 'Cursos', href: '/courses' },
+  { name: 'Comunidade', href: '/community' },
+  { name: 'Perfil', href: '/profile' }
+]
+</script>
+
+<template>
+  <div class="min-h-screen bg-base-100">
+    <header class="navbar bg-base-200 shadow-sm">
+      <div class="navbar-start">
+        <div class="dropdown lg:hidden">
+          <label tabindex="0" class="btn btn-ghost btn-circle">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path>
+            </svg>
+          </label>
+          <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+            <li v-for="item in navigation" :key="item.name">
+              <NuxtLink :to="item.href">{{ item.name }}</NuxtLink>
+            </li>
+          </ul>
+        </div>
+        <NuxtLink to="/" class="btn btn-ghost text-xl">Nexttera</NuxtLink>
+      </div>
+      
+      <div class="navbar-center hidden lg:flex">
+        <ul class="menu menu-horizontal px-1">
+          <li v-for="item in navigation" :key="item.name">
+            <NuxtLink :to="item.href" class="btn btn-ghost">{{ item.name }}</NuxtLink>
+          </li>
+        </ul>
+      </div>
+      
+      <div class="navbar-end">
+        <div class="dropdown dropdown-end">
+          <label tabindex="0" class="btn btn-ghost btn-circle avatar">
+            <div class="w-10 rounded-full">
+              <img src="/avatar-placeholder.jpg" alt="Avatar">
+            </div>
+          </label>
+          <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+            <li><NuxtLink to="/profile">Perfil</NuxtLink></li>
+            <li><NuxtLink to="/settings">Configurações</NuxtLink></li>
+            <li><a href="/logout">Sair</a></li>
+          </ul>
+        </div>
+      </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+      <slot />
+    </main>
+
+    <footer class="footer footer-center p-10 bg-base-200 text-base-content">
+      <div>
+        <p class="font-bold">Nexttera Members Area</p>
+        <p>© 2025 Nexttera. Todos os direitos reservados.</p>
+      </div>
+    </footer>
+  </div>
+</template>
+```
+
+### Error Page ([error.vue](mdc:error.vue))
+```vue
+<script setup lang="ts">
+const props = defineProps<{
+  error: {
+    statusCode: number
+    statusMessage: string
+    message: string
+  }
+}>()
+
+const handleError = () => clearError({ redirect: '/' })
+</script>
+
+<template>
+  <div class="min-h-screen bg-base-100 flex items-center justify-center">
+    <div class="text-center">
+      <div class="max-w-md mx-auto">
+        <div class="text-6xl font-bold text-error mb-4">
+          {{ error.statusCode }}
+        </div>
+        <h1 class="text-2xl font-bold text-base-content mb-4">
+          {{ error.statusMessage }}
+        </h1>
+        <p class="text-base-content/70 mb-8">
+          {{ error.message }}
+        </p>
+        <div class="space-x-4">
+          <button @click="handleError" class="btn btn-primary">
+            Voltar ao Início
+          </button>
+          <NuxtLink to="/" class="btn btn-outline">
+            Página Inicial
+          </NuxtLink>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+```
+
+## Development Workflow
+
+### Pre-commit Setup
+```bash
+# Install development tools
+yarn add --dev eslint @nuxt/eslint-config prettier
+
+# Add to package.json scripts
+"lint": "eslint .",
+"lint:fix": "eslint . --fix",
+"format": "prettier --write ."
+```
+
+### Git Configuration ([.gitignore](mdc:.gitignore))
+```gitignore
+# Nuxt dev/build outputs
+.output
+.nuxt
+.nitro
+.cache
+dist
+
+# Node dependencies
+node_modules
+
+# Logs
+*.log*
+
+# Misc
+.DS_Store
+.fleet
+.idea
+
+# Local env files
+.env
+.env.*
+!.env.example
+```
+
+## Deployment Configuration
+
+### Build Settings
+- Use `yarn build` for production builds
+- Configure environment variables for different stages
+- Set up proper caching strategies
+- Implement health checks and monitoring
+
+### Performance Optimization
+- Enable image optimization with `<NuxtImg>`
+- Configure proper prerendering for static content
+- Implement code splitting strategies
+- Set up CDN for static assets

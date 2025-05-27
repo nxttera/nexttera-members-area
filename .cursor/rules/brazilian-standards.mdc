@@ -1,0 +1,590 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Brazilian Development Standards
+
+## Language & Localization Rules
+
+### Portuguese-First Development
+- Always use Brazilian Portuguese in user-facing content
+- Use English only for code, comments, and technical documentation
+- Implement proper i18n structure for future multilingual support
+- Use Brazilian date, time, and currency formats
+
+### Content Standards
+```vue
+<!-- Portuguese for UI text -->
+<template>
+  <div class="hero bg-base-200">
+    <div class="hero-content text-center">
+      <div class="max-w-md">
+        <h1 class="text-5xl font-bold">Bem-vindo à Nexttera</h1>
+        <p class="py-6">Sua plataforma de membros exclusiva</p>
+        <button class="btn btn-primary">Começar Agora</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- English for code logic -->
+<script setup lang="ts">
+const isAuthenticated = ref(false)
+const userProfile = await useFetch('/api/user/profile')
+</script>
+```
+
+## Brazilian Business Patterns
+
+### User Authentication & Data
+- Implement CPF validation for Brazilian users
+- Support both CPF and CNPJ for different user types
+- Use Brazilian phone number format (11) 9XXXX-XXXX
+- Support Brazilian postal code format XXXXX-XXX
+
+### Data Validation Composables
+```typescript
+// composables/useValidation.ts
+export const useValidation = () => {
+  const validateCPF = (cpf: string): boolean => {
+    const cleanCPF = cpf.replace(/\D/g, '')
+    if (cleanCPF.length !== 11) return false
+    
+    // CPF validation algorithm
+    let sum = 0
+    for (let i = 0; i < 9; i++) {
+      sum += parseInt(cleanCPF.charAt(i)) * (10 - i)
+    }
+    let digit = 11 - (sum % 11)
+    if (digit === 10 || digit === 11) digit = 0
+    if (digit !== parseInt(cleanCPF.charAt(9))) return false
+    
+    sum = 0
+    for (let i = 0; i < 10; i++) {
+      sum += parseInt(cleanCPF.charAt(i)) * (11 - i)
+    }
+    digit = 11 - (sum % 11)
+    if (digit === 10 || digit === 11) digit = 0
+    
+    return digit === parseInt(cleanCPF.charAt(10))
+  }
+  
+  const validateCNPJ = (cnpj: string): boolean => {
+    const cleanCNPJ = cnpj.replace(/\D/g, '')
+    if (cleanCNPJ.length !== 14) return false
+    
+    // CNPJ validation algorithm
+    const weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+    const weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+    
+    let sum = 0
+    for (let i = 0; i < 12; i++) {
+      sum += parseInt(cleanCNPJ.charAt(i)) * weights1[i]
+    }
+    let digit = sum % 11 < 2 ? 0 : 11 - (sum % 11)
+    if (digit !== parseInt(cleanCNPJ.charAt(12))) return false
+    
+    sum = 0
+    for (let i = 0; i < 13; i++) {
+      sum += parseInt(cleanCNPJ.charAt(i)) * weights2[i]
+    }
+    digit = sum % 11 < 2 ? 0 : 11 - (sum % 11)
+    
+    return digit === parseInt(cleanCNPJ.charAt(13))
+  }
+  
+  const formatCPF = (cpf: string): string => {
+    const clean = cpf.replace(/\D/g, '')
+    return clean.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+  }
+  
+  const formatCNPJ = (cnpj: string): string => {
+    const clean = cnpj.replace(/\D/g, '')
+    return clean.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')
+  }
+  
+  const formatPhone = (phone: string): string => {
+    const clean = phone.replace(/\D/g, '')
+    if (clean.length === 11) {
+      return clean.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')
+    }
+    return phone
+  }
+  
+  const formatCEP = (cep: string): string => {
+    const clean = cep.replace(/\D/g, '')
+    return clean.replace(/(\d{5})(\d{3})/, '$1-$2')
+  }
+  
+  return {
+    validateCPF,
+    validateCNPJ,
+    formatCPF,
+    formatCNPJ,
+    formatPhone,
+    formatCEP
+  }
+}
+```
+
+### Form Components with Brazilian Standards
+```vue
+<!-- components/forms/DocumentInput.vue -->
+<script setup lang="ts">
+interface Props {
+  modelValue: string
+  type: 'cpf' | 'cnpj'
+  label: string
+  required?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  required: false
+})
+
+const emit = defineEmits<{
+  'update:modelValue': [value: string]
+}>()
+
+const { validateCPF, validateCNPJ, formatCPF, formatCNPJ } = useValidation()
+
+const inputValue = computed({
+  get: () => props.modelValue,
+  set: (value: string) => {
+    const formatted = props.type === 'cpf' ? formatCPF(value) : formatCNPJ(value)
+    emit('update:modelValue', formatted)
+  }
+})
+
+const isValid = computed(() => {
+  if (!props.modelValue) return true
+  return props.type === 'cpf' 
+    ? validateCPF(props.modelValue)
+    : validateCNPJ(props.modelValue)
+})
+
+const maxLength = computed(() => props.type === 'cpf' ? 14 : 18)
+const placeholder = computed(() => props.type === 'cpf' ? '000.000.000-00' : '00.000.000/0000-00')
+</script>
+
+<template>
+  <div class="form-control w-full">
+    <label class="label">
+      <span class="label-text">{{ label }}</span>
+      <span v-if="required" class="label-text text-error">*</span>
+    </label>
+    <input
+      v-model="inputValue"
+      type="text"
+      :class="[
+        'input input-bordered w-full',
+        { 'input-error': !isValid && modelValue },
+        { 'input-success': isValid && modelValue }
+      ]"
+      :placeholder="placeholder"
+      :maxlength="maxLength"
+      :required="required"
+    >
+    <label v-if="!isValid && modelValue" class="label">
+      <span class="label-text-alt text-error">
+        {{ type === 'cpf' ? 'CPF inválido' : 'CNPJ inválido' }}
+      </span>
+    </label>
+  </div>
+</template>
+```
+
+## Brazilian Date & Time Formatting
+
+### Date/Time Utilities
+```typescript
+// composables/useBrazilianDate.ts
+export const useBrazilianDate = () => {
+  const formatDate = (date: Date | string): string => {
+    const d = new Date(date)
+    return d.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    })
+  }
+  
+  const formatDateTime = (date: Date | string): string => {
+    const d = new Date(date)
+    return d.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+  
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(amount)
+  }
+  
+  const formatNumber = (number: number): string => {
+    return new Intl.NumberFormat('pt-BR').format(number)
+  }
+  
+  const formatPercentage = (percentage: number): string => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'percent',
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 2
+    }).format(percentage / 100)
+  }
+  
+  return {
+    formatDate,
+    formatDateTime,
+    formatCurrency,
+    formatNumber,
+    formatPercentage
+  }
+}
+```
+
+## Brazilian Address & Location
+
+### Address Component
+```vue
+<!-- components/forms/AddressForm.vue -->
+<script setup lang="ts">
+interface Address {
+  cep: string
+  street: string
+  number: string
+  complement?: string
+  district: string
+  city: string
+  state: string
+}
+
+const props = defineProps<{
+  modelValue: Address
+}>()
+
+const emit = defineEmits<{
+  'update:modelValue': [value: Address]
+}>()
+
+const { formatCEP } = useValidation()
+const address = computed({
+  get: () => props.modelValue,
+  set: (value: Address) => emit('update:modelValue', value)
+})
+
+const brazilianStates = [
+  { code: 'AC', name: 'Acre' },
+  { code: 'AL', name: 'Alagoas' },
+  { code: 'AP', name: 'Amapá' },
+  { code: 'AM', name: 'Amazonas' },
+  { code: 'BA', name: 'Bahia' },
+  { code: 'CE', name: 'Ceará' },
+  { code: 'DF', name: 'Distrito Federal' },
+  { code: 'ES', name: 'Espírito Santo' },
+  { code: 'GO', name: 'Goiás' },
+  { code: 'MA', name: 'Maranhão' },
+  { code: 'MT', name: 'Mato Grosso' },
+  { code: 'MS', name: 'Mato Grosso do Sul' },
+  { code: 'MG', name: 'Minas Gerais' },
+  { code: 'PA', name: 'Pará' },
+  { code: 'PB', name: 'Paraíba' },
+  { code: 'PR', name: 'Paraná' },
+  { code: 'PE', name: 'Pernambuco' },
+  { code: 'PI', name: 'Piauí' },
+  { code: 'RJ', name: 'Rio de Janeiro' },
+  { code: 'RN', name: 'Rio Grande do Norte' },
+  { code: 'RS', name: 'Rio Grande do Sul' },
+  { code: 'RO', name: 'Rondônia' },
+  { code: 'RR', name: 'Roraima' },
+  { code: 'SC', name: 'Santa Catarina' },
+  { code: 'SP', name: 'São Paulo' },
+  { code: 'SE', name: 'Sergipe' },
+  { code: 'TO', name: 'Tocantins' }
+]
+
+const searchAddressByCEP = async (cep: string) => {
+  if (cep.length === 9) {
+    try {
+      const cleanCEP = cep.replace(/\D/g, '')
+      const response = await $fetch(`https://viacep.com.br/ws/${cleanCEP}/json/`)
+      
+      if (!response.erro) {
+        address.value = {
+          ...address.value,
+          street: response.logradouro,
+          district: response.bairro,
+          city: response.localidade,
+          state: response.uf
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao buscar CEP:', error)
+    }
+  }
+}
+
+watch(() => address.value.cep, (newCEP) => {
+  searchAddressByCEP(newCEP)
+})
+</script>
+
+<template>
+  <div class="space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">CEP *</span>
+        </label>
+        <input
+          v-model="address.cep"
+          type="text"
+          class="input input-bordered"
+          placeholder="00000-000"
+          maxlength="9"
+          @input="address.cep = formatCEP(address.cep)"
+          required
+        >
+      </div>
+      
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">Estado *</span>
+        </label>
+        <select v-model="address.state" class="select select-bordered" required>
+          <option value="">Selecione o estado</option>
+          <option v-for="state in brazilianStates" :key="state.code" :value="state.code">
+            {{ state.name }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-control">
+      <label class="label">
+        <span class="label-text">Endereço *</span>
+      </label>
+      <input
+        v-model="address.street"
+        type="text"
+        class="input input-bordered"
+        placeholder="Rua, Avenida, etc."
+        required
+      >
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">Número *</span>
+        </label>
+        <input
+          v-model="address.number"
+          type="text"
+          class="input input-bordered"
+          placeholder="123"
+          required
+        >
+      </div>
+      
+      <div class="form-control md:col-span-2">
+        <label class="label">
+          <span class="label-text">Complemento</span>
+        </label>
+        <input
+          v-model="address.complement"
+          type="text"
+          class="input input-bordered"
+          placeholder="Apartamento, sala, etc."
+        >
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">Bairro *</span>
+        </label>
+        <input
+          v-model="address.district"
+          type="text"
+          class="input input-bordered"
+          placeholder="Bairro"
+          required
+        >
+      </div>
+      
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">Cidade *</span>
+        </label>
+        <input
+          v-model="address.city"
+          type="text"
+          class="input input-bordered"
+          placeholder="Cidade"
+          required
+        >
+      </div>
+    </div>
+  </div>
+</template>
+```
+
+## Brazilian Payment & Financial Standards
+
+### Payment Methods
+```typescript
+// types/payment.ts
+export interface PaymentMethod {
+  type: 'credit_card' | 'debit_card' | 'pix' | 'boleto' | 'bank_transfer'
+  name: string
+  icon: string
+  installments?: number
+}
+
+export const brazilianPaymentMethods: PaymentMethod[] = [
+  { type: 'pix', name: 'PIX', icon: 'pix-icon' },
+  { type: 'credit_card', name: 'Cartão de Crédito', icon: 'credit-card-icon', installments: 12 },
+  { type: 'debit_card', name: 'Cartão de Débito', icon: 'debit-card-icon' },
+  { type: 'boleto', name: 'Boleto Bancário', icon: 'boleto-icon' },
+  { type: 'bank_transfer', name: 'Transferência Bancária', icon: 'bank-transfer-icon' }
+]
+```
+
+## Content Guidelines
+
+### Writing Standards
+- Use inclusive language and neutral tone
+- Follow Brazilian Portuguese grammar rules
+- Use formal tone for business content
+- Use friendly tone for user interactions
+- Include accessibility considerations in content
+
+### Common Phrases & Labels
+```typescript
+// constants/labels.ts
+export const COMMON_LABELS = {
+  // Navigation
+  home: 'Início',
+  about: 'Sobre',
+  contact: 'Contato',
+  dashboard: 'Painel',
+  profile: 'Perfil',
+  settings: 'Configurações',
+  logout: 'Sair',
+  
+  // Actions
+  save: 'Salvar',
+  cancel: 'Cancelar',
+  edit: 'Editar',
+  delete: 'Excluir',
+  create: 'Criar',
+  update: 'Atualizar',
+  confirm: 'Confirmar',
+  back: 'Voltar',
+  next: 'Próximo',
+  previous: 'Anterior',
+  
+  // Form fields
+  name: 'Nome',
+  email: 'E-mail',
+  password: 'Senha',
+  confirmPassword: 'Confirmar Senha',
+  phone: 'Telefone',
+  cpf: 'CPF',
+  cnpj: 'CNPJ',
+  birthDate: 'Data de Nascimento',
+  
+  // Status
+  active: 'Ativo',
+  inactive: 'Inativo',
+  pending: 'Pendente',
+  approved: 'Aprovado',
+  rejected: 'Rejeitado',
+  
+  // Messages
+  success: 'Sucesso',
+  error: 'Erro',
+  warning: 'Aviso',
+  info: 'Informação',
+  loading: 'Carregando...',
+  noData: 'Nenhum dado encontrado',
+  
+  // Time
+  today: 'Hoje',
+  yesterday: 'Ontem',
+  tomorrow: 'Amanhã',
+  thisWeek: 'Esta semana',
+  thisMonth: 'Este mês',
+  thisYear: 'Este ano'
+} as const
+```
+
+## Brazilian Legal Compliance
+
+### LGPD (Lei Geral de Proteção de Dados) Considerations
+- Implement proper consent mechanisms
+- Provide clear privacy policies in Portuguese
+- Allow users to export and delete their data
+- Implement data retention policies
+- Ensure secure data processing
+
+### Cookie Consent Component
+```vue
+<!-- components/ui/CookieConsent.vue -->
+<script setup lang="ts">
+const showConsent = ref(false)
+
+onMounted(() => {
+  const consent = localStorage.getItem('cookie-consent')
+  if (!consent) {
+    showConsent.value = true
+  }
+})
+
+const acceptCookies = () => {
+  localStorage.setItem('cookie-consent', 'accepted')
+  showConsent.value = false
+}
+
+const rejectCookies = () => {
+  localStorage.setItem('cookie-consent', 'rejected')
+  showConsent.value = false
+}
+</script>
+
+<template>
+  <div
+    v-if="showConsent"
+    class="fixed bottom-0 left-0 right-0 bg-base-200 p-4 shadow-lg z-50"
+  >
+    <div class="container mx-auto max-w-4xl">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="text-sm text-base-content">
+          <p>
+            Este site utiliza cookies para melhorar sua experiência. 
+            Ao continuar navegando, você concorda com nossa 
+            <NuxtLink to="/privacy" class="link link-primary">Política de Privacidade</NuxtLink>.
+          </p>
+        </div>
+        <div class="flex gap-2">
+          <button @click="rejectCookies" class="btn btn-outline btn-sm">
+            Recusar
+          </button>
+          <button @click="acceptCookies" class="btn btn-primary btn-sm">
+            Aceitar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+```

@@ -1,0 +1,330 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Styling Guidelines - Tailwind CSS & daisyUI
+
+## Color System Philosophy
+
+### daisyUI Semantic Colors (Always Preferred)
+- **Primary Colors**: `primary`, `primary-content`
+- **Secondary Colors**: `secondary`, `secondary-content`  
+- **Accent Colors**: `accent`, `accent-content`
+- **Neutral Colors**: `neutral`, `neutral-content`
+- **Base Colors**: `base-100`, `base-200`, `base-300`, `base-content`
+- **State Colors**: `info`, `success`, `warning`, `error` + their `-content` variants
+
+### Color Usage Rules
+1. Always use daisyUI color names for theme compatibility
+2. Avoid Tailwind color names (`red-500`, `blue-600`) for main UI elements
+3. Use `*-content` colors for text on colored backgrounds
+4. No need for `dark:` prefixes with daisyUI colors
+5. Use `base-*` colors for page structure and elevation
+6. Reserve Tailwind colors only for decorative elements that shouldn't change with themes
+
+## Component Styling Patterns
+
+### Layout Components
+```vue
+<!-- Hero Section -->
+<div class="hero min-h-screen bg-base-200">
+  <div class="hero-content text-center">
+    <div class="max-w-md">
+      <h1 class="text-5xl font-bold text-base-content">Title</h1>
+      <p class="py-6 text-base-content/70">Subtitle</p>
+      <button class="btn btn-primary">Action</button>
+    </div>
+  </div>
+</div>
+
+<!-- Card Layout -->
+<div class="card bg-base-100 shadow-xl">
+  <div class="card-body">
+    <h2 class="card-title text-base-content">Card Title</h2>
+    <p class="text-base-content/70">Description</p>
+    <div class="card-actions justify-end">
+      <button class="btn btn-primary">Action</button>
+    </div>
+  </div>
+</div>
+```
+
+### Navigation Components
+```vue
+<!-- Navbar -->
+<div class="navbar bg-base-200">
+  <div class="navbar-start">
+    <NuxtLink to="/" class="btn btn-ghost text-xl">Logo</NuxtLink>
+  </div>
+  <div class="navbar-center hidden lg:flex">
+    <ul class="menu menu-horizontal px-1">
+      <li><NuxtLink to="/about" class="btn btn-ghost">About</NuxtLink></li>
+      <li><NuxtLink to="/contact" class="btn btn-ghost">Contact</NuxtLink></li>
+    </ul>
+  </div>
+  <div class="navbar-end">
+    <button class="btn btn-primary">Get Started</button>
+  </div>
+</div>
+
+<!-- Drawer for Mobile -->
+<div class="drawer lg:drawer-open">
+  <input id="drawer-toggle" type="checkbox" class="drawer-toggle">
+  <div class="drawer-content">
+    <!-- Page content -->
+  </div>
+  <div class="drawer-side">
+    <label for="drawer-toggle" class="drawer-overlay"></label>
+    <ul class="menu p-4 w-80 min-h-full bg-base-200">
+      <li><NuxtLink to="/">Home</NuxtLink></li>
+      <li><NuxtLink to="/about">About</NuxtLink></li>
+    </ul>
+  </div>
+</div>
+```
+
+## Form Styling Standards
+
+### Input Components
+```vue
+<!-- Basic Form -->
+<form class="space-y-4">
+  <div class="form-control w-full">
+    <label class="label">
+      <span class="label-text">Email</span>
+    </label>
+    <input type="email" class="input input-bordered w-full" required>
+  </div>
+  
+  <div class="form-control w-full">
+    <label class="label">
+      <span class="label-text">Password</span>
+    </label>
+    <input type="password" class="input input-bordered w-full" required>
+  </div>
+  
+  <div class="form-control">
+    <label class="label cursor-pointer">
+      <span class="label-text">Remember me</span>
+      <input type="checkbox" class="checkbox checkbox-primary">
+    </label>
+  </div>
+  
+  <button type="submit" class="btn btn-primary w-full">Sign In</button>
+</form>
+
+<!-- File Upload -->
+<div class="form-control w-full">
+  <label class="label">
+    <span class="label-text">Upload file</span>
+  </label>
+  <input type="file" class="file-input file-input-bordered w-full">
+</div>
+```
+
+### Validation States
+```vue
+<!-- Success State -->
+<div class="form-control w-full">
+  <input type="email" class="input input-bordered input-success" value="valid@email.com">
+  <label class="label">
+    <span class="label-text-alt text-success">Email is valid</span>
+  </label>
+</div>
+
+<!-- Error State -->
+<div class="form-control w-full">
+  <input type="email" class="input input-bordered input-error" value="invalid">
+  <label class="label">
+    <span class="label-text-alt text-error">Please enter a valid email</span>
+  </label>
+</div>
+```
+
+## Responsive Design Patterns
+
+### Mobile-First Approach
+```vue
+<!-- Responsive Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  <div class="card bg-base-100 shadow-xl">Content</div>
+  <div class="card bg-base-100 shadow-xl">Content</div>
+  <div class="card bg-base-100 shadow-xl">Content</div>
+</div>
+
+<!-- Responsive Text -->
+<h1 class="text-2xl md:text-4xl lg:text-6xl font-bold text-base-content">
+  Responsive Heading
+</h1>
+
+<!-- Responsive Spacing -->
+<div class="p-4 md:p-8 lg:p-12">
+  <div class="space-y-4 md:space-y-6 lg:space-y-8">
+    <!-- Content with responsive spacing -->
+  </div>
+</div>
+```
+
+### Container Patterns
+```vue
+<!-- Full Width with Max Width Container -->
+<div class="bg-base-200">
+  <div class="container mx-auto px-4 py-8 max-w-7xl">
+    <!-- Content -->
+  </div>
+</div>
+
+<!-- Section Spacing -->
+<section class="py-12 md:py-16 lg:py-20">
+  <div class="container mx-auto px-4">
+    <!-- Section content -->
+  </div>
+</section>
+```
+
+## Button & Interactive Element Patterns
+
+### Button Variations
+```vue
+<!-- Primary Actions -->
+<button class="btn btn-primary">Primary Action</button>
+<button class="btn btn-secondary">Secondary Action</button>
+<button class="btn btn-accent">Accent Action</button>
+
+<!-- Button Sizes -->
+<button class="btn btn-primary btn-xs">Extra Small</button>
+<button class="btn btn-primary btn-sm">Small</button>
+<button class="btn btn-primary btn-md">Medium</button>
+<button class="btn btn-primary btn-lg">Large</button>
+
+<!-- Button States -->
+<button class="btn btn-primary loading">Loading</button>
+<button class="btn btn-primary" disabled>Disabled</button>
+
+<!-- Button Groups -->
+<div class="btn-group">
+  <button class="btn btn-active">Active</button>
+  <button class="btn">Inactive</button>
+  <button class="btn">Inactive</button>
+</div>
+```
+
+### Link Styling
+```vue
+<!-- Navigation Links -->
+<NuxtLink to="/page" class="link link-primary">Primary Link</NuxtLink>
+<NuxtLink to="/page" class="link link-hover">Hover Link</NuxtLink>
+
+<!-- Button-style Links -->
+<NuxtLink to="/cta" class="btn btn-primary">Call to Action</NuxtLink>
+<NuxtLink to="/secondary" class="btn btn-outline">Secondary CTA</NuxtLink>
+```
+
+## Animation & Transitions
+
+### daisyUI Animations
+```vue
+<!-- Loading Animations -->
+<div class="loading loading-spinner loading-lg text-primary"></div>
+<div class="loading loading-dots loading-lg text-primary"></div>
+<div class="loading loading-ring loading-lg text-primary"></div>
+
+<!-- Progress Indicators -->
+<progress class="progress progress-primary w-56" value="70" max="100"></progress>
+<div class="radial-progress text-primary" style="--value:70;">70%</div>
+```
+
+### Custom Transitions
+```vue
+<!-- Page Transitions in nuxt.config.ts -->
+export default defineNuxtConfig({
+  app: {
+    pageTransition: { name: 'page', mode: 'out-in' },
+    layoutTransition: { name: 'layout', mode: 'out-in' }
+  }
+})
+
+<!-- CSS for Transitions -->
+<style>
+.page-enter-active,
+.page-leave-active {
+  transition: all 0.3s ease;
+}
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+  transform: translateX(20px);
+}
+</style>
+```
+
+## Theme Implementation
+
+### Theme Switching
+```vue
+<!-- Theme Controller -->
+<div class="dropdown">
+  <label tabindex="0" class="btn m-1">Theme</label>
+  <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
+    <li><input type="radio" name="theme-dropdown" class="theme-controller" value="light" aria-label="Light"></li>
+    <li><input type="radio" name="theme-dropdown" class="theme-controller" value="dark" aria-label="Dark"></li>
+    <li><input type="radio" name="theme-dropdown" class="theme-controller" value="cupcake" aria-label="Cupcake"></li>
+  </ul>
+</div>
+```
+
+## Performance Considerations
+
+### CSS Optimization
+- Use daisyUI components to reduce custom CSS
+- Leverage Tailwind's purging for optimal bundle size
+- Avoid deep nesting and complex selectors
+- Use semantic HTML with appropriate daisyUI classes
+
+### Critical CSS Patterns
+```vue
+<!-- Above-the-fold optimization -->
+<div class="hero min-h-screen bg-base-200">
+  <!-- Critical content with minimal CSS -->
+</div>
+
+<!-- Lazy-loaded sections -->
+<section v-lazy class="py-20 bg-base-100">
+  <!-- Non-critical content -->
+</section>
+```
+
+## Accessibility Guidelines
+
+### Semantic HTML with daisyUI
+```vue
+<!-- Proper heading hierarchy -->
+<h1 class="text-4xl font-bold text-base-content">Main Title</h1>
+<h2 class="text-2xl font-semibold text-base-content">Section Title</h2>
+
+<!-- Form accessibility -->
+<div class="form-control">
+  <label class="label" for="email-input">
+    <span class="label-text">Email Address</span>
+  </label>
+  <input id="email-input" type="email" class="input input-bordered" aria-describedby="email-help">
+  <label class="label" id="email-help">
+    <span class="label-text-alt">We'll never share your email</span>
+  </label>
+</div>
+
+<!-- Button accessibility -->
+<button class="btn btn-primary" aria-label="Close dialog">
+  <svg class="w-6 h-6" fill="none" stroke="currentColor">
+    <!-- Icon -->
+  </svg>
+</button>
+```
+
+### Focus and Interaction States
+- All interactive elements should have visible focus states
+- Use daisyUI's built-in focus styles
+- Ensure sufficient color contrast ratios
+- Test with keyboard navigation
+- Implement proper ARIA attributes where needed

@@ -1,0 +1,261 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Nuxt Development Rules
+
+## Project Structure & Setup
+
+### Core Architecture
+- Use [nuxt.config.ts](mdc:nuxt.config.ts) as single source of truth for configuration
+- Follow Nuxt 3 directory structure with file-based routing in [pages/](mdc:pages)
+- Place components in [components/](mdc:components) for auto-import
+- Use [layouts/](mdc:layouts) for shared UI structures
+- Store composables in [composables/](mdc:composables) for reusable logic
+- API routes go in [server/api/](mdc:server/api)
+- Middleware in [middleware/](mdc:middleware) for route logic
+
+### Dependencies Management
+- Always use Yarn for NodeJS/Javascript/Typescript/Nuxt projects
+- Install Tailwind CSS: `yarn add --dev @nuxtjs/tailwindcss`
+- Install daisyUI: `yarn add --dev daisyui@latest`
+
+## Configuration Guidelines
+
+### Nuxt Config ([nuxt.config.ts](mdc:nuxt.config.ts))
+```typescript
+export default defineNuxtConfig({
+  modules: [
+    '@nuxtjs/tailwindcss',
+    'nuxt-llms'
+  ],
+  tailwindcss: {
+    exposeConfig: true,
+    viewer: true
+  },
+  llms: {
+    domain: 'https://your-domain.com',
+    title: 'Your App Title',
+    description: 'Your app description'
+  },
+  css: ['~/assets/css/main.css']
+})
+```
+
+### Tailwind + daisyUI CSS ([assets/css/main.css](mdc:assets/css/main.css))
+```css
+@import "tailwindcss";
+@plugin "daisyui";
+```
+
+## Development Best Practices
+
+### Code Quality
+- Never add comments - everything must be clean, contextual and readable
+- Follow SOLID principles and DRY principle
+- Use strongly typed TypeScript throughout
+- Make all UI responsive and mobile-first
+- Always check if files exist before creating new ones
+
+### Component Development
+- Use Vue 3 Composition API with `<script setup lang="ts">`
+- Leverage Nuxt auto-imports for composables
+- Use `definePageMeta()` for page-specific configuration
+- Implement proper error handling with `<NuxtErrorBoundary>`
+
+### Styling Guidelines
+- Use daisyUI semantic color names (primary, secondary, accent, base-100, etc.)
+- Avoid Tailwind color names like `red-500` to maintain theme compatibility
+- Use `*-content` colors for proper contrast
+- Prefer daisyUI components over custom CSS
+- Use responsive utilities with Tailwind prefixes (sm:, md:, lg:)
+- Force styles only with `!` when absolutely necessary
+
+## Component Architecture
+
+### Layout Structure
+```vue
+<!-- layouts/default.vue -->
+<template>
+  <div class="min-h-screen bg-base-100">
+    <header class="navbar bg-base-200">
+      <NuxtLink to="/" class="btn btn-ghost">Logo</NuxtLink>
+    </header>
+    <main class="container mx-auto px-4">
+      <slot />
+    </main>
+    <footer class="footer bg-base-300 p-10">
+      <!-- Footer content -->
+    </footer>
+  </div>
+</template>
+```
+
+### Page Structure
+```vue
+<!-- pages/index.vue -->
+<script setup lang="ts">
+definePageMeta({
+  title: 'Home Page'
+})
+
+const { data } = await useFetch('/api/data')
+</script>
+
+<template>
+  <div class="hero min-h-96 bg-base-200">
+    <div class="hero-content text-center">
+      <div class="max-w-md">
+        <h1 class="text-5xl font-bold text-base-content">Hello World</h1>
+        <p class="py-6 text-base-content/70">Description text</p>
+        <button class="btn btn-primary">Get Started</button>
+      </div>
+    </div>
+  </div>
+</template>
+```
+
+## Data Fetching Patterns
+
+### Server-Side Data
+- Use `useFetch()` for SSR-compatible data fetching
+- Use `useAsyncData()` for complex data transformations
+- Use `$fetch()` only for client-side interactions
+- Implement proper error handling and loading states
+
+### Example Data Fetching
+```vue
+<script setup lang="ts">
+const { data: users, error, refresh } = await useFetch('/api/users', {
+  key: 'users',
+  transform: (data: any[]) => data.map(user => ({
+    id: user.id,
+    name: user.name,
+    email: user.email
+  }))
+})
+</script>
+```
+
+## daisyUI Component Usage
+
+### Common Patterns
+- Use semantic HTML with daisyUI classes
+- Combine daisyUI components with Tailwind utilities
+- Follow daisyUI naming conventions (component, part, modifier)
+
+### Button Examples
+```html
+<!-- Primary button -->
+<button class="btn btn-primary">Primary</button>
+
+<!-- Button with custom spacing -->
+<button class="btn btn-secondary px-8">Custom Padding</button>
+
+<!-- Loading button -->
+<button class="btn btn-primary loading">Loading</button>
+```
+
+### Form Examples
+```html
+<!-- Input with validation -->
+<input type="email" class="input input-bordered w-full" required>
+
+<!-- Select dropdown -->
+<select class="select select-bordered w-full">
+  <option>Choose option</option>
+</select>
+
+<!-- Textarea -->
+<textarea class="textarea textarea-bordered w-full" rows="4"></textarea>
+```
+
+## SEO & Performance
+
+### Meta Management
+- Use `useSeoMeta()` for SEO meta tags
+- Use `useHead()` for dynamic head management
+- Implement proper title templates
+- Add structured data when needed
+
+### Performance Optimizations
+- Use `<NuxtImg>` for optimized images
+- Implement lazy loading with `useLazyFetch()`
+- Use proper caching strategies
+- Minimize payload with `pick` and `transform` options
+
+## State Management
+
+### Local State
+- Use `useState()` for SSR-friendly shared state
+- Use `ref()` and `reactive()` for component-local state
+- Implement proper state initialization
+
+### Example State Usage
+```typescript
+// composables/useCounter.ts
+export const useCounter = () => {
+  return useState('counter', () => 0)
+}
+
+// In component
+const counter = useCounter()
+```
+
+## Error Handling
+
+### Global Error Handling
+- Create [error.vue](mdc:error.vue) for custom error pages
+- Use `<NuxtErrorBoundary>` for component-level error handling
+- Implement proper error logging and reporting
+
+### API Error Handling
+```vue
+<script setup lang="ts">
+const { data, error } = await useFetch('/api/data')
+
+if (error.value) {
+  throw createError({
+    statusCode: 404,
+    statusMessage: 'Data not found'
+  })
+}
+</script>
+```
+
+## Deployment & Build
+
+### Build Configuration
+- Configure proper prerendering for static routes
+- Use ISR (Incremental Static Regeneration) for dynamic content
+- Implement proper environment variable management
+- Set up proper caching strategies
+
+### Environment Setup
+```bash
+# Development
+yarn dev
+
+# Build for production
+yarn build
+
+# Preview production build
+yarn preview
+```
+
+## Testing Guidelines
+
+### Component Testing
+- Write tests for composables and utilities
+- Test component behavior, not implementation
+- Use proper mocking for external dependencies
+- Ensure accessibility compliance
+
+## Documentation Standards
+
+### LLMs Integration
+- Use `nuxt-llms` module for AI-ready documentation
+- Generate `/llms.txt` automatically
+- Provide structured content for AI consumption
+- Keep documentation up-to-date with code changes
