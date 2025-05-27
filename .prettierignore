@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+.output/
+.nuxt/
+dist/
+
+# Logs
+*.log*
+
+# Package manager files
+yarn.lock
+package-lock.json
+pnpm-lock.yaml
+
+# Generated files
+.nitro/
+.cache/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+.env
+.env.*
+!.env.example 

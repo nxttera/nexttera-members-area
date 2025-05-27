@@ -1,0 +1,38 @@
+{
+  "name": "nexttera-members-area",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "type-check": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@nuxt/eslint": "1.4.1",
+    "@nuxt/icon": "1.13.0",
+    "@nuxt/image": "1.10.0",
+    "@nuxt/scripts": "0.11.7",
+    "@nuxt/test-utils": "3.19.1",
+    "@unhead/vue": "^2.0.3",
+    "eslint": "^9.0.0",
+    "nuxt": "^3.17.4",
+    "vue": "^3.5.14",
+    "vue-router": "^4.5.1"
+  },
+  "packageManager": "yarn@1.22.21+sha1.1959a18351b811cdeedbd484a8f86c3cc3bbaf72",
+  "devDependencies": {
+    "@iconify-json/heroicons": "^1.2.2",
+    "@tailwindcss/vite": "^4.1.7",
+    "daisyui": "^5.0.38",
+    "prettier": "^3.5.3",
+    "tailwindcss": "^4.1.7",
+    "typescript": "^5.8.3"
+  }
+}
