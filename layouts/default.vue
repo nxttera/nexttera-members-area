@@ -3,6 +3,8 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: 'heroicons:home' },
   { name: 'Pipeline', href: '/pipeline', icon: 'heroicons:funnel' },
   { name: 'Análises', href: '/analytics', icon: 'heroicons:chart-bar' },
+  { name: 'Formulários', href: '/formularios', icon: 'heroicons:document-text' },
+  { name: 'Chats', href: '/chats', icon: 'heroicons:chat-bubble-left' },
   { name: 'Automações', href: '/automations', icon: 'heroicons:cog-6-tooth' },
   { name: 'Relatórios', href: '/reports', icon: 'heroicons:document-chart-bar' }
 ]
@@ -67,7 +69,7 @@ const userMenuItems = [
         <div class="dropdown dropdown-end">
           <label tabindex="0" class="btn btn-ghost btn-circle avatar">
             <div class="w-10 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-              <img src="/images/avatar-placeholder.svg" alt="Avatar" >
+              <img src="/images/avatar-placeholder.svg" alt="Avatar" />
             </div>
           </label>
           <ul
@@ -82,7 +84,7 @@ const userMenuItems = [
       </div>
     </header>
 
-    <main class="container mx-auto px-4 py-8">
+    <main class="">
       <slot />
     </main>
 

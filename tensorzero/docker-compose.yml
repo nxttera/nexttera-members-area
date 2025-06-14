@@ -1,0 +1,68 @@
+services:
+  tensorzero-gateway:
+    image: tensorzero/gateway:latest
+    container_name: tensorzero-gateway
+    ports:
+      - '3001:3000'
+    volumes:
+      - ./tensorzero.toml:/app/config/tensorzero.toml:ro
+    command: --config-file /app/config/tensorzero.toml
+    environment:
+      - TENSORZERO_CLICKHOUSE_URL=${TENSORZERO_CLICKHOUSE_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - RUST_LOG=${RUST_LOG:-info}
+      - TENSORZERO_GATEWAY_BIND_ADDRESS=0.0.0.0:3000
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    networks:
+      - tensorzero-network
+    # depends_on:
+    #   clickhouse:
+    #     condition: service_healthy
+
+  tensorzero-ui:
+    image: tensorzero/ui:latest
+    container_name: tensorzero-ui
+    ports:
+      - '4000:4000'
+    volumes:
+      - ./tensorzero.toml:/app/config/tensorzero.toml:ro
+    environment:
+      - TENSORZERO_CLICKHOUSE_URL=${TENSORZERO_CLICKHOUSE_URL}
+      - TENSORZERO_GATEWAY_URL=http://tensorzero-gateway:3000
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    restart: unless-stopped
+    depends_on:
+      tensorzero-gateway:
+        condition: service_healthy
+    networks:
+      - tensorzero-network
+
+  # clickhouse:
+  #   image: clickhouse/clickhouse-server:24.12-alpine
+  #   environment:
+  #     CLICKHOUSE_USER: chuser
+  #     CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+  #     CLICKHOUSE_PASSWORD: chpassword
+  #   ports:
+  #     - '8123:8123'
+  #     - '9000:9000'
+  #   healthcheck:
+  #     test: wget http://chuser:chpassword@localhost:8123/ping
+  #     interval: 15s
+  #     start_period: 30s
+  #     start_interval: 10s
+  #     timeout: 10s
+
+networks:
+  tensorzero-network:
+    driver: bridge

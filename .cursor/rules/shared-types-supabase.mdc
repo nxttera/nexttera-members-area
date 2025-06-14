@@ -1,0 +1,49 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Tipos Compartilhados do Supabase
+
+Esta regra define como criar e organizar tipos TypeScript para integração com Supabase.
+
+## Estrutura dos Tipos
+
+Leia o arquivo @shared/types/database.types.ts para definir:
+
+### Interface Database
+- Use tipos genéricos para reutilização, cuidado com conflito de nomes nos tipos
+- Mantenha a tipagem forte para todas as operações
+- Crie todos os tipos no @shared/types/[contexto ou modulo do tipo].ts
+
+### Tipos de Tabelas
+```typescript
+export interface Database {
+  public: {
+    Tables: {
+      users: {
+        Row: UserRow
+        Insert: UserInsert
+        Update: UserUpdate
+      }
+      // outras tabelas...
+    }
+  }
+}
+```
+
+### Convenções de Nomenclatura
+- `Item`: Tipo para dados lidos do banco
+- `Insert`: Tipo para inserção (campos opcionais)
+- `Update`: Tipo para atualização (todos os campos opcionais)
+
+## Exportação de Tipos
+- Exporte tipos individuais para reutilização
+- Mantenha consistência com as tabelas do Supabase
+- Use tipos utilitários do TypeScript quando apropriado
+
+## Localização
+- Armazene em `shared/types/`
+- Use nome descritivo para o arquivo (ex: `courses.ts`, `quests.ts`)
+- Não use imports
+- Não edite o `database.types`, ele é auto gerado pelo supabse

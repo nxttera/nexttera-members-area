@@ -3,428 +3,96 @@ description:
 globs: 
 alwaysApply: true
 ---
-# Code Quality Rules - ZERO COMMENTS POLICY
+# Qualidade de Código
 
-## REGRA FUNDAMENTAL: ZERO COMENTÁRIOS
+Esta regra define padrões e práticas para manter alta qualidade no código do projeto.
 
-### NUNCA escrever comentários em HIPÓTESE ALGUMA
-- **PROIBIDO**: Comentários explicativos no código
-- **PROIBIDO**: Comentários de TODO/FIXME
-- **PROIBIDO**: Comentários descritivos
-- **PROIBIDO**: Comentários inline
-- **PROIBIDO**: Comentários de bloco
-- **EXCEÇÃO ÚNICA**: Docstrings JSDoc para métodos/funções públicas (SEMPRE EM INGLÊS)
+## Princípios Fundamentais
 
-### Exemplos INCORRETOS (NUNCA fazer)
+### SOLID Principles
+- **Single Responsibility**: Cada função/classe deve ter uma única responsabilidade
+- **Open/Closed**: Aberto para extensão, fechado para modificação
+- **Liskov Substitution**: Subtipos devem ser substituíveis por seus tipos base
+- **Interface Segregation**: Interfaces específicas são melhores que interfaces genéricas
+- **Dependency Inversion**: Dependa de abstrações, não de implementações concretas
+
+### DRY (Don't Repeat Yourself)
+- Extraia código repetido em funções/componentes reutilizáveis
+- Use constantes para valores que se repetem
+- Crie utilitários para lógicas comuns
+
+## Estrutura de Arquivos
+
+### Nomenclatura Consistente
+- **Arquivos**: kebab-case (ex: `user-profile.vue`)
+- **Componentes**: PascalCase (ex: `UserProfile`)
+- **Variáveis/Funções**: camelCase (ex: `fetchUserData`)
+- **Constantes**: UPPER_SNAKE_CASE (ex: `MAX_RETRY_ATTEMPTS`)
+
+## Tipagem TypeScript
+
+### Tipos Explícitos
 ```typescript
-// ❌ ERRADO - Comentário explicativo
-const calculateTotal = (items: Item[]) => {
-  // Soma todos os itens do array
-  return items.reduce((sum, item) => sum + item.price, 0)
+interface User {
+  id: string
+  name: string
+  email: string
+  createdAt: Date
 }
 
-// ❌ ERRADO - Comentário TODO
-const processPayment = () => {
-  // TODO: Implementar validação
-  return true
-}
-
-// ❌ ERRADO - Comentário descritivo
-// Esta função processa pagamentos PIX
-const processPixPayment = () => {
-  return pixService.process()
+const createUser = (userData: Omit<User, 'id' | 'createdAt'>): Promise<User> => {
+  return userService.create(userData)
 }
 ```
 
-### Exemplos CORRETOS
+### Evite `any`
+- Use `unknown` quando o tipo for realmente desconhecido
+- Implemente type guards para validação de tipos
+- Use generics para flexibilidade mantendo tipagem
+
+## Performance
+
+### Lazy Loading
+- Carregue componentes sob demanda
+- Use dynamic imports para rotas
+- Implemente code splitting estratégico
+
+### Otimização de Re-renders
 ```typescript
-// ✅ CORRECT - Self-explanatory code
-const calculateTotalPrice = (cartItems: CartItem[]) => {
-  return cartItems.reduce((total, item) => total + item.price, 0)
-}
-
-const validateCpfFormat = (cpf: string) => {
-  const cleanCpf = cpf.replace(/\D/g, '')
-  return cleanCpf.length === 11
-}
-
-const processPixPayment = async (amount: number, pixKey: string) => {
-  const isValidKey = validatePixKey(pixKey)
-  if (!isValidKey) throw new Error('Chave PIX inválida')
-  
-  return await pixService.createPayment({
-    amount,
-    pixKey,
-    expiresIn: PIX_EXPIRATION_TIME
-  })
-}
-```
-
-### ÚNICA EXCEÇÃO: Docstrings JSDoc (SEMPRE EM INGLÊS)
-```typescript
-/**
- * Processes PIX payment and returns transaction data
- * @param amount - Payment amount in cents
- * @param pixKey - Recipient PIX key
- * @returns Processed transaction data
- * @throws Error when PIX key is invalid
- */
-export const processPixPayment = async (
-  amount: number, 
-  pixKey: string
-): Promise<PaymentTransaction> => {
-  const isValidKey = validatePixKey(pixKey)
-  if (!isValidKey) throw new Error('Chave PIX inválida')
-  
-  return await pixService.createPayment({
-    amount,
-    pixKey,
-    expiresIn: PIX_EXPIRATION_TIME
-  })
-}
-```
-
-## CLEAN CODE PRINCIPLES
-
-### Naming Standards
-- Use descriptive names that eliminate the need for comments
-- Prefer long, clear names over explanatory comments
-- Use verbs for functions and nouns for variables
-
-### Self-Documenting Code Examples
-```typescript
-// ✅ CORRECT - Self-explanatory names
-const isUserEligibleForPremium = (user: User) => {
-  return user.subscriptionType === 'premium' && user.isActive
-}
-
-const formatBrazilianCurrency = (amountInCents: number) => {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL'
-  }).format(amountInCents / 100)
-}
-
-const validateCpfCheckDigits = (cpf: string) => {
-  const digits = cpf.replace(/\D/g, '').split('').map(Number)
-  const firstDigit = calculateCpfFirstDigit(digits.slice(0, 9))
-  const secondDigit = calculateCpfSecondDigit(digits.slice(0, 10))
-  
-  return digits[9] === firstDigit && digits[10] === secondDigit
-}
-```
-
-### Function Decomposition
-- Break complex functions into smaller, well-named functions
-- Each function should have a single responsibility
-- Extract complex logic into functions with descriptive names
-
-```typescript
-// ✅ CORRECT - Small, well-named functions
-const createMembershipSubscription = async (userData: UserData) => {
-  const validatedUser = validateUserData(userData)
-  const paymentResult = processSubscriptionPayment(validatedUser.paymentInfo)
-  const membership = createMembershipRecord(validatedUser, paymentResult)
-  
-  await sendWelcomeEmail(validatedUser.email)
-  await notifyAdminOfNewMember(membership)
-  
-  return membership
-}
-
-const validateUserData = (userData: UserData) => {
-  if (!isValidCpf(userData.cpf)) {
-    throw new Error('CPF inválido')
-  }
-  
-  if (!isValidEmail(userData.email)) {
-    throw new Error('Email inválido')
-  }
-  
-  return userData
-}
-```
-
-## TYPE SAFETY AS DOCUMENTATION
-
-### Use TypeScript Types as Documentation
-```typescript
-// ✅ CORRECT - Types serve as documentation
-interface MembershipData {
-  readonly id: string
-  readonly cpf: string
-  readonly email: string
-  readonly createdAt: Date
-  readonly subscriptionType: 'basic' | 'premium' | 'enterprise'
-  readonly paymentStatus: 'pending' | 'paid' | 'failed'
-  readonly isActive: boolean
-}
-
-type PaymentMethod = 'pix' | 'credit_card' | 'boleto'
-
-interface PaymentProcessingResult {
-  readonly transactionId: string
-  readonly status: 'success' | 'failed'
-  readonly processedAt: Date
-  readonly errorMessage?: string
-}
-```
-
-### Descriptive Error Messages
-```typescript
-// ✅ CORRECT - Clear error messages
-const validateMembershipData = (data: MembershipData) => {
-  if (!data.cpf || data.cpf.length !== 11) {
-    throw new Error('CPF deve conter exatamente 11 dígitos')
-  }
-  
-  if (!data.email.includes('@')) {
-    throw new Error('Email deve conter @ para ser válido')
-  }
-  
-  if (!['basic', 'premium', 'enterprise'].includes(data.subscriptionType)) {
-    throw new Error('Tipo de assinatura deve ser basic, premium ou enterprise')
-  }
-}
-```
-
-## CONSTANTS AND ENUMS
-
-### Use Named Constants Instead of Magic Numbers
-```typescript
-// ✅ CORRECT - Named constants
-const CPF_LENGTH = 11
-const CNPJ_LENGTH = 14
-const PIX_EXPIRATION_MINUTES = 15
-const MAX_LOGIN_ATTEMPTS = 5
-const PASSWORD_MIN_LENGTH = 8
-
-const validateDocument = (document: string, type: 'cpf' | 'cnpj') => {
-  const expectedLength = type === 'cpf' ? CPF_LENGTH : CNPJ_LENGTH
-  const cleanDocument = document.replace(/\D/g, '')
-  
-  if (cleanDocument.length !== expectedLength) {
-    throw new Error(`${type.toUpperCase()} deve ter ${expectedLength} dígitos`)
-  }
-  
-  return cleanDocument
-}
-```
-
-### Enums for Related Constants
-```typescript
-// ✅ CORRECT - Enums for related values
-enum MembershipStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  SUSPENDED = 'suspended',
-  CANCELLED = 'cancelled'
-}
-
-enum PaymentProvider {
-  STRIPE = 'stripe',
-  MERCADO_PAGO = 'mercado_pago',
-  PAGSEGURO = 'pagseguro'
-}
-
-const processPaymentWithProvider = (
-  provider: PaymentProvider,
-  amount: number
-) => {
-  switch (provider) {
-    case PaymentProvider.STRIPE:
-      return stripeService.processPayment(amount)
-    case PaymentProvider.MERCADO_PAGO:
-      return mercadoPagoService.processPayment(amount)
-    case PaymentProvider.PAGSEGURO:
-      return pagseguroService.processPayment(amount)
-    default:
-      throw new Error(`Provider ${provider} não é suportado`)
-  }
-}
-```
-
-## COMPOSABLES AS SELF-DOCUMENTING UNITS
-
-### Clear Composable Names and Structure
-```typescript
-// ✅ CORRECT - Self-explanatory composable
-export const useMembershipValidation = () => {
-  const validateCpfFormat = (cpf: string): boolean => {
-    const cleanCpf = cpf.replace(/\D/g, '')
-    return cleanCpf.length === 11
-  }
-  
-  const validateEmailFormat = (email: string): boolean => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-  }
-  
-  const validatePasswordStrength = (password: string): boolean => {
-    return password.length >= PASSWORD_MIN_LENGTH &&
-           /[A-Z]/.test(password) &&
-           /[a-z]/.test(password) &&
-           /\d/.test(password)
-  }
-  
-  const validateMembershipForm = (formData: MembershipFormData) => {
-    const errors: Record<string, string> = {}
+const MemoizedComponent = defineComponent({
+  name: 'MemoizedComponent',
+  setup(props) {
+    const expensiveComputation = computed(() => {
+      return heavyCalculation(props.data)
+    })
     
-    if (!validateCpfFormat(formData.cpf)) {
-      errors.cpf = 'CPF deve conter 11 dígitos numéricos'
-    }
-    
-    if (!validateEmailFormat(formData.email)) {
-      errors.email = 'Email deve ter formato válido'
-    }
-    
-    if (!validatePasswordStrength(formData.password)) {
-      errors.password = 'Senha deve ter 8+ caracteres com maiúscula, minúscula e número'
-    }
-    
-    return {
-      isValid: Object.keys(errors).length === 0,
-      errors
-    }
+    return { expensiveComputation }
   }
-  
-  return {
-    validateCpfFormat,
-    validateEmailFormat,
-    validatePasswordStrength,
-    validateMembershipForm
-  }
-}
+})
 ```
 
-## COMPONENT TEMPLATE CLARITY
+## Tratamento de Erros
 
-### Vue Templates Without Comments (HTML comments in English only)
-```vue
-<!-- ✅ CORRECT - Self-explanatory template -->
-<template>
-  <div class="membership-form bg-base-100 p-6 rounded-lg shadow-xl">
-    <h2 class="text-2xl font-bold text-base-content mb-6">
-      Criar Nova Assinatura
-    </h2>
-    
-    <form @submit.prevent="handleFormSubmission" class="space-y-4">
-      <BaseInput
-        v-model="formData.cpf"
-        label="CPF"
-        type="text"
-        :error="validationErrors.cpf"
-        :maxlength="CPF_MAX_LENGTH"
-        required
-      />
-      
-      <BaseInput
-        v-model="formData.email"
-        label="Email"
-        type="email"
-        :error="validationErrors.email"
-        required
-      />
-      
-      <div class="subscription-type-selection">
-        <label class="label">
-          <span class="label-text">Tipo de Assinatura</span>
-        </label>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <SubscriptionTypeCard
-            v-for="type in availableSubscriptionTypes"
-            :key="type.id"
-            :subscription-type="type"
-            :is-selected="formData.subscriptionType === type.id"
-            @select="handleSubscriptionTypeSelection"
-          />
-        </div>
-      </div>
-      
-      <div class="form-actions flex justify-end space-x-4">
-        <button
-          type="button"
-          @click="handleFormCancellation"
-          class="btn btn-outline"
-        >
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          :disabled="isFormSubmitting || !isFormValid"
-          class="btn btn-primary"
-        >
-          <span v-if="isFormSubmitting" class="loading loading-spinner"></span>
-          {{ isFormSubmitting ? 'Processando...' : 'Criar Assinatura' }}
-        </button>
-      </div>
-    </form>
-  </div>
-</template>
-```
-
-## ERROR HANDLING WITHOUT COMMENTS
-
-### Self-Explaining Error Handling
+### Async/Await
 ```typescript
-// ✅ CORRECT - Self-explanatory error handling
-const processNewMembershipRegistration = async (
-  registrationData: MembershipRegistrationData
-) => {
+const fetchData = async (): Promise<ApiResult<Data>> => {
   try {
-    const validatedData = validateRegistrationData(registrationData)
-    const processedPayment = await processInitialPayment(validatedData.paymentInfo)
-    const createdMembership = await createMembershipRecord(validatedData, processedPayment)
-    
-    await sendMembershipConfirmationEmail(createdMembership)
-    
-    return {
-      success: true,
-      membership: createdMembership,
-      message: 'Assinatura criada com sucesso'
-    }
+    const response = await apiCall()
+    return { data: response.data, error: null }
   } catch (error) {
-    if (error instanceof PaymentProcessingError) {
-      return {
-        success: false,
-        error: 'Erro no processamento do pagamento',
-        details: error.message
-      }
-    }
-    
-    if (error instanceof ValidationError) {
-      return {
-        success: false,
-        error: 'Dados de cadastro inválidos',
-        details: error.message
-      }
-    }
-    
-    if (error instanceof EmailDeliveryError) {
-      return {
-        success: false,
-        error: 'Assinatura criada mas email de confirmação falhou',
-        details: 'Contate o suporte para reenvio'
-      }
-    }
-    
-    throw new UnexpectedRegistrationError(
-      'Erro inesperado durante criação de assinatura',
-      { originalError: error }
-    )
+    logger('API Error:', error)
+    return { data: null, error: 'DataLoadFailed' }
   }
 }
 ```
 
-## ENFORCEMENT REMINDERS
+### Error Boundaries
+- Use ErrorBoundary components para capturar erros
+- Implemente fallbacks informativos
+- Log erros para monitoramento
 
-### Regras para Code Review
-1. **Rejeitar QUALQUER pull request que contenha comentários**
-2. **Sugerir refatoração quando código não é auto-explicativo**
-3. **Preferir nomes longos e descritivos a comentários**
-4. **Extrair funções complexas em funções menores e nomeadas**
-5. **Usar TypeScript types como documentação**
-
-### Ferramentas de Validação
-- Configurar ESLint para proibir comentários (exceto JSDoc)
-- Usar pre-commit hooks para validar ausência de comentários
-- Implementar CI/CD checks para garantir código limpo
+### UI & Design
+- Sempre crie componentes reutilizaveis
+- Use a DaisyUI para construir todas interfaces
+- Todo o sistema deve ter um vies de jogos/RPG
+- 

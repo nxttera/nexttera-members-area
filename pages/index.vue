@@ -3,6 +3,37 @@ definePageMeta({
   title: 'Home'
 })
 
+const user = useSupabaseUser()
+const { userProfile, isLoading } = useUserProfile()
+
+const checkUserRedirect = async () => {
+  if (!user.value) return
+
+  // Aguarda o perfil carregar
+  while (isLoading.value) {
+    await new Promise(resolve => setTimeout(resolve, 100))
+  }
+
+  // Se não tem perfil ou onboarding não foi completado, vai para onboarding
+  if (!userProfile.value || !userProfile.value.onboarding_completed) {
+    await navigateTo('/onboarding')
+    return
+  }
+
+  // Se tem perfil completo e onboarding foi feito, vai para dashboard
+  await navigateTo('/dashboard')
+}
+
+watch(
+  user,
+  () => {
+    if (user.value) {
+      checkUserRedirect()
+    }
+  },
+  { immediate: true }
+)
+
 const features = [
   {
     icon: 'heroicons:chart-bar',
