@@ -29,7 +29,6 @@ export default defineNuxtConfig({
         "/500",
         "/termos-de-uso",
         "/politica-de-privacidade",
-        "/api/**",
       ],
       saveRedirectToCookie: true,
       login: "/login",
