@@ -4,18 +4,6 @@ EXCEPTION
     WHEN duplicate_object THEN NULL;
 END $$;
 
-CREATE TABLE IF NOT EXISTS user_credentials (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  openai_api_key TEXT DEFAULT NULL,
-  anthropic_api_key TEXT DEFAULT NULL,
-  google_api_key TEXT DEFAULT NULL,
-  deepseek_api_key TEXT DEFAULT NULL,
-  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE,
-  UNIQUE(user_id)
-);
-
 CREATE TABLE IF NOT EXISTS chat_sessions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,

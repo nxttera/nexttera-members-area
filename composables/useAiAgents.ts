@@ -62,7 +62,7 @@ const DEFAULT_TOOL_CONFIGS: Record<AiToolCategory, Partial<AiAgentConfig>> = {
   },
 };
 
-export const useAiTools = () => {
+export const useAiAgents = () => {
   const tools = ref<AiAgentTool[]>([]);
   const isLoading = ref(false);
   const error = ref<string | null>(null);

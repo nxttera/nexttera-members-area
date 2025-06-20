@@ -6,7 +6,7 @@ definePageMeta({
   layout: 'default'
 })
 
-const { tools, isLoading, error, fetchTools } = useAiTools()
+const { tools, isLoading, error, fetchTools } = useAiAgents()
 const selectedTool = ref<AiAgentTool | null>(null)
 const showChatWidget = ref(false)
 const searchQuery = ref('')

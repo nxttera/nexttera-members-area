@@ -18,7 +18,7 @@ export default defineNuxtConfig({
   supabase: {
     redirectOptions: {
       exclude: [
-        "/",
+        // "/",
         "/login",
         "/register",
         "/forgot-password",
@@ -36,6 +36,7 @@ export default defineNuxtConfig({
     },
     cookiePrefix: "__nxt__",
     types: "./shared/types/database.types",
+    useSsrCookies: true,
   },
 
   vite: {
