@@ -2,6 +2,7 @@ import {
   serverSupabaseServiceRole,
   serverSupabaseUser,
 } from "#supabase/server";
+import { BrandPositioningService } from "~/server/services/brandPositioningService";
 
 export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event);
@@ -14,6 +15,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const supabase = serverSupabaseServiceRole(event);
+  const brandPositioningService = new BrandPositioningService(supabase);
   const sessionId = getRouterParam(event, "sessionId");
 
   if (!sessionId) {
@@ -36,25 +38,10 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const { data: session, error } = await supabase
-    .from("brand_positioning_sessions")
-    .select(`
-      id,
-      title,
-      status,
-      created_at,
-      total_progress
-    `)
-    .eq("id", sessionId)
-    .eq("user_id", user.id)
-    .single();
-
-  if (error || !session) {
-    throw createError({
-      statusCode: 404,
-      statusMessage: "Sessão não encontrada",
-    });
-  }
+  const session = await brandPositioningService.getSessionById(
+    sessionId,
+    user.id,
+  );
 
   return {
     success: true,

@@ -2,6 +2,7 @@ import {
   serverSupabaseServiceRole,
   serverSupabaseUser,
 } from "#supabase/server";
+import { UserProfileService } from "~/server/services/userProfileService";
 
 export default defineEventHandler(async (event) => {
   const user = event.context.user || (await serverSupabaseUser(event));
@@ -14,33 +15,9 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = await readBody(event);
+
   const supabase = serverSupabaseServiceRole(event);
+  const userProfileService = new UserProfileService(supabase);
 
-  // Validate and sanitize the body data
-  const allowedFields = ["name", "company", "phone", "onboarding_completed"];
-  const updateData: Record<string, any> = {};
-
-  for (const [key, value] of Object.entries(body)) {
-    if (allowedFields.includes(key)) {
-      updateData[key] = value;
-    }
-  }
-
-  updateData.updated_at = new Date().toISOString();
-
-  const { data: updatedProfile, error } = await (supabase as any)
-    .from("user_profiles")
-    .update(updateData)
-    .eq("id", user.id)
-    .select()
-    .single();
-
-  if (error) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: "Erro ao atualizar perfil",
-    });
-  }
-
-  return updatedProfile;
+  return await userProfileService.updateUserProfile(user.id, body);
 });

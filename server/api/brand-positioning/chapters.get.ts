@@ -2,6 +2,7 @@ import {
   serverSupabaseServiceRole,
   serverSupabaseUser,
 } from "#supabase/server";
+import { BrandPositioningService } from "~/server/services/brandPositioningService";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -26,30 +27,18 @@ export default defineEventHandler(async (event) => {
     }
 
     const supabase = serverSupabaseServiceRole(event);
+    const brandPositioningService = new BrandPositioningService(supabase);
 
-    const { data: chapters, error } = await supabase
-      .from("chapters")
-      .select("*")
-      .order("order_number");
+    const chapters = await brandPositioningService.getAllChapters();
 
-    if (error) {
-      throw createError({
-        statusCode: 500,
-        statusMessage: `Failed to fetch chapters: ${error.message}`,
-      });
-    }
-
-    // Adicionar contagem de missões para cada capítulo
     const chaptersWithCounts = await Promise.all(
-      (chapters || []).map(async (chapter: any) => {
-        const { data: missions } = await supabase
-          .from("missions")
-          .select("id")
-          .eq("chapter_id", chapter.id);
-
+      chapters.map(async (chapter: any) => {
+        const missions = await brandPositioningService.getChapterMissions(
+          chapter.id,
+        );
         return {
           ...chapter,
-          missions_count: missions?.length || 0,
+          missions_count: missions.length,
         };
       }),
     );

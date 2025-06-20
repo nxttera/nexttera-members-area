@@ -2,6 +2,7 @@ import {
   serverSupabaseServiceRole,
   serverSupabaseUser,
 } from "#supabase/server";
+import { BrandPositioningService } from "~/server/services/brandPositioningService";
 
 export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event);
@@ -14,6 +15,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const supabase = serverSupabaseServiceRole(event);
+  const brandPositioningService = new BrandPositioningService(supabase);
 
   const { data: userProfile } = await supabase
     .from("user_profiles")
@@ -28,24 +30,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const { data: sessions, error } = await supabase
-    .from("brand_positioning_sessions")
-    .select(`
-      id,
-      title,
-      status,
-      created_at,
-      total_progress
-    `)
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: "Erro ao buscar sessões",
-    });
-  }
+  const sessions = await brandPositioningService.getUserSessions(user.id);
 
   return {
     success: true,

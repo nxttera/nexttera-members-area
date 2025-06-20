@@ -2,6 +2,7 @@ import {
   serverSupabaseServiceRole,
   serverSupabaseUser,
 } from "#supabase/server";
+import { UserProfileService } from "~/server/services/userProfileService";
 
 export default defineEventHandler(async (event) => {
   const user = event.context.user || (await serverSupabaseUser(event));
@@ -14,19 +15,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const supabase = serverSupabaseServiceRole(event);
+  const userProfileService = new UserProfileService(supabase);
 
-  const { data: userProfile, error } = await supabase
-    .from("user_profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-
-  if (error) {
-    throw createError({
-      statusCode: 404,
-      statusMessage: "Perfil não encontrado",
-    });
-  }
-
-  return userProfile;
+  return await userProfileService.getUserProfile(user.id);
 });

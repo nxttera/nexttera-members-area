@@ -2,6 +2,7 @@ import {
   serverSupabaseServiceRole,
   serverSupabaseUser,
 } from "#supabase/server";
+import { BrandPositioningService } from "~/server/services/brandPositioningService";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -35,22 +36,14 @@ export default defineEventHandler(async (event) => {
     }
 
     const supabase = serverSupabaseServiceRole(event);
+    const brandPositioningService = new BrandPositioningService(supabase);
 
-    const { data: missions, error } = await supabase
-      .from("missions")
-      .select("*")
-      .eq("chapter_id", chapterId)
-      .order("order_number");
-
-    if (error) {
-      throw createError({
-        statusCode: 500,
-        statusMessage: `Failed to fetch missions: ${error.message}`,
-      });
-    }
+    const missions = await brandPositioningService.getChapterMissions(
+      chapterId,
+    );
 
     return {
-      data: missions || [],
+      data: missions,
       success: true,
     };
   } catch (error: any) {

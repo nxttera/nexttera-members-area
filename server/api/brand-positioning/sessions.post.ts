@@ -2,6 +2,7 @@ import {
   serverSupabaseServiceRole,
   serverSupabaseUser,
 } from "#supabase/server";
+import { BrandPositioningService } from "~/server/services/brandPositioningService";
 
 export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event);
@@ -14,6 +15,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const supabase = serverSupabaseServiceRole(event);
+  const brandPositioningService = new BrandPositioningService(supabase);
 
   const { data: userProfile } = await supabase
     .from("user_profiles")
@@ -30,23 +32,9 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody(event);
 
-  const { data: session, error } = await (supabase as any)
-    .from("brand_positioning_sessions")
-    .insert({
-      user_id: user.id,
-      title: body.title || "Nova Sessão de Posicionamento",
-      status: "draft",
-      total_progress: 0,
-    })
-    .select()
-    .single();
-
-  if (error) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: "Erro ao criar sessão",
-    });
-  }
+  const session = await brandPositioningService.createSession(user.id, {
+    title: body.title || "Nova Sessão de Posicionamento",
+  });
 
   return {
     success: true,
