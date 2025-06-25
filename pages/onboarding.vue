@@ -11,7 +11,7 @@ const { userProfile, updateUserProfile, isLoading } = useUserProfile()
 watch(
   userProfile,
   profile => {
-    if (profile?.onboarding_completed) {
+    if (profile?.is_profile_completed) {
       navigateTo('/brand-positioning')
     }
   },
@@ -53,7 +53,7 @@ const completeOnboarding = async () => {
     // Marca o onboarding como completo
     const onboardingComplete = await $fetch('/api/user/profile', {
       method: 'PUT',
-      body: { onboarding_completed: true }
+      body: { is_profile_completed: true }
     })
     console.log('Onboarding marcado como completo:', onboardingComplete)
 

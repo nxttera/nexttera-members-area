@@ -5,7 +5,7 @@ interface UserProfile {
   phone?: string;
   company?: string;
   is_active: boolean;
-  onboarding_completed: boolean;
+  is_profile_completed: boolean;
   created_at: string;
   updated_at: string;
 }

@@ -5,7 +5,7 @@ export interface UserProfileUpdateData {
   name?: string;
   company?: string;
   phone?: string;
-  onboarding_completed?: boolean;
+  is_profile_completed?: boolean;
 }
 
 export class UserProfileService {
@@ -42,7 +42,7 @@ export class UserProfileService {
         userId,
         hasName: !!userProfile?.name,
         hasCompany: !!userProfile?.company,
-        onboardingCompleted: userProfile?.onboarding_completed,
+        onboardingCompleted: userProfile?.is_profile_completed,
       });
 
       return userProfile;
@@ -72,14 +72,14 @@ export class UserProfileService {
         hasName: "name" in updateData,
         hasCompany: "company" in updateData,
         hasPhone: "phone" in updateData,
-        onboardingUpdate: "onboarding_completed" in updateData,
+        onboardingUpdate: "is_profile_completed" in updateData,
       });
 
       const allowedFields = [
         "name",
         "company",
         "phone",
-        "onboarding_completed",
+        "is_profile_completed",
       ];
       const sanitizedData: Record<string, any> = {};
 

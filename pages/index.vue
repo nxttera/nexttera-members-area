@@ -15,7 +15,7 @@ const checkUserRedirect = async () => {
   }
 
   // Se não tem perfil ou onboarding não foi completado, vai para onboarding
-  if (!userProfile.value || !userProfile.value.onboarding_completed) {
+  if (!userProfile.value || !userProfile.value.is_profile_completed) {
     await navigateTo('/onboarding')
     return
   }
